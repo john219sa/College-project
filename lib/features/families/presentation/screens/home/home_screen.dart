@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../children/children_list_screen.dart';
+// إضافة استيراد القائمة الجانبية بناءً على هيكلة مشروعك
+import '../../../../../shared/widgets/custom_drawer.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -8,6 +10,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
+
+      // 1. إضافة القائمة الجانبية هنا
+      drawer: const CustomSideMenu(),
 
       body: SingleChildScrollView(
         child: Column(
@@ -28,42 +33,67 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                 child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
+                    // تم استخدام Stack لإضافة زر المنيو دون التأثير على التصميم
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-
-                        child: const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
+                      // زر فتح القائمة الجانبية (تمت إضافته ليتمكن المستخدم من فتح المنيو)
+                      Positioned(
+                        top: 10,
+                        right: 15,
+                        child: Builder(
+                          builder: (context) => IconButton(
+                            icon: const Icon(
+                              Icons.menu,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () => Scaffold.of(context).openDrawer(),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(width: double.infinity),
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
 
-                      const Text(
-                        'م. جون صفوت',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                            child: const CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.white24,
+                              child: Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
 
-                      const SizedBox(height: 4),
+                          const SizedBox(height: 12),
 
-                      const Text(
-                        'مدير النظام',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                          const Text(
+                            'م. جون صفوت',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          const Text(
+                            'مدير النظام',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
