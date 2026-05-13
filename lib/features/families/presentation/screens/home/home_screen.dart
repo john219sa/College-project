@@ -191,6 +191,8 @@ class HomeScreen extends StatelessWidget {
                     'أسرة الحالات الشديدة',
                     'أمين: م. مينا',
                     Colors.red,
+                    15, // عدد الأطفال
+                    8, // عدد الأخصائيين
                   ),
 
                   _buildFamilyTile(
@@ -198,6 +200,8 @@ class HomeScreen extends StatelessWidget {
                     'أسرة الحالات المتوسطة',
                     'أمين: م. جاسر',
                     Colors.orange,
+                    22, // عدد الأطفال
+                    12, // عدد الأخصائيين
                   ),
 
                   _buildFamilyTile(
@@ -205,6 +209,8 @@ class HomeScreen extends StatelessWidget {
                     'أسرة الحالات الضعيفة',
                     'أمين: مايكل',
                     Colors.green,
+                    30, // عدد الأطفال
+                    15, // عدد الأخصائيين
                   ),
 
                   const SizedBox(height: 30),
@@ -291,6 +297,8 @@ class HomeScreen extends StatelessWidget {
     String title,
     String subtitle,
     Color color,
+    int childrenCount,
+    int specialistsCount,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -320,7 +328,34 @@ class HomeScreen extends StatelessWidget {
 
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
 
-        subtitle: Text(subtitle),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(subtitle),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  'الأطفال: $childrenCount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Text(
+                  'الأخصائيين: $specialistsCount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
 
         trailing: const Icon(
           Icons.arrow_forward_ios_rounded,

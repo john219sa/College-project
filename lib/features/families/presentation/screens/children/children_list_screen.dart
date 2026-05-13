@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../psychologists/psychologist_screen.dart';
+// إضافة استيراد صفحة تفاصيل الطفل
+import 'child_details_screen.dart';
 
 class ChildrenListScreen extends StatelessWidget {
   const ChildrenListScreen({super.key});
@@ -127,6 +129,8 @@ class ChildrenListScreen extends StatelessWidget {
               itemCount: 10,
 
               itemBuilder: (context, index) {
+                final String childName = 'الطفل: حالة شديدة ${index + 1}';
+
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 15,
@@ -152,7 +156,7 @@ class ChildrenListScreen extends StatelessWidget {
                     ),
 
                     title: Text(
-                      'الطفل: حالة شديدة ${index + 1}',
+                      childName,
                       textAlign: TextAlign.right,
 
                       style: const TextStyle(fontWeight: FontWeight.bold),
@@ -164,9 +168,11 @@ class ChildrenListScreen extends StatelessWidget {
                     ),
 
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('تم الضغط على الطفل رقم ${index + 1}'),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ChildDetailsScreen(childName: childName),
                         ),
                       );
                     },
