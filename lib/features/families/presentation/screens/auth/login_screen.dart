@@ -1,22 +1,149 @@
 import 'package:flutter/material.dart';
-import '../home/home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+import '../../../../../services/auth_service.dart';
+
+import '../home/home_screen.dart';
+import '../children/children_list_screen.dart';
+import '../children/child_details_screen.dart';
+
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  // ================= CONTROLLERS =================
+
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  // ================= LOGIN FUNCTION =================
+
+  Future<void> login() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final response = await AuthService.login(
+        email: emailController.text.trim(),
+
+        password: passwordController.text.trim(),
+      );
+
+      // ================= SUCCESS =================
+
+      if (response['status'] == true) {
+        final user = response['data'];
+
+        final String role = user['role'] ?? '';
+
+        final String fullName = user['full_name'] ?? '';
+
+        final int familyId = user['family_id'] ?? 0;
+
+        final String familyName = user['family_name'] ?? '';
+
+        // ================= ADMIN =================
+
+        if (role == 'admin') {
+          Navigator.pushReplacement(
+            context,
+
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+        // ================= FAMILY MANAGER =================
+        else if (role == 'family_manager') {
+          Navigator.pushReplacement(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) => ChildrenListScreen(
+                familyId: familyId,
+                familyName: familyName,
+              ),
+            ),
+          );
+        }
+        // ================= SPECIALIST =================
+        else if (role == 'specialist') {
+          Navigator.pushReplacement(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) => ChildrenListScreen(
+                familyId: familyId,
+                familyName: familyName,
+              ),
+            ),
+          );
+        }
+        // ================= PARENT =================
+        else if (role == 'parent') {
+          Navigator.pushReplacement(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) => ChildDetailsScreen(
+                childName: fullName,
+
+                currentUserRole: UserRole.parent,
+              ),
+            ),
+          );
+        }
+        // ================= UNKNOWN ROLE =================
+        else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('صلاحية المستخدم غير معروفة')),
+          );
+        }
+      }
+      // ================= FAILED =================
+      else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(response['message'])));
+      }
+    }
+    // ================= ERROR =================
+    catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30),
+
             child: Container(
               padding: const EdgeInsets.all(20),
+
               decoration: BoxDecoration(
                 color: Colors.white,
+
                 borderRadius: BorderRadius.circular(30),
+
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -24,32 +151,47 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+
                 children: [
+                  // ================= LOGO =================
                   Container(
                     height: 100,
                     width: 100,
+
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
+
                       image: const DecorationImage(
                         image: AssetImage('assets/logo.jpg'),
+
                         fit: BoxFit.cover,
                       ),
+
                       border: Border.all(color: Colors.black12, width: 1),
                     ),
                   ),
 
                   const SizedBox(height: 40),
 
+                  // ================= EMAIL =================
                   TextField(
+                    controller: emailController,
+
                     decoration: InputDecoration(
-                      hintText: 'User Name',
+                      hintText: 'Email',
+
                       prefixIcon: const Icon(Icons.person_outline),
+
                       filled: true,
+
                       fillColor: const Color(0xFFF0F2F5),
+
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
+
                         borderSide: BorderSide.none,
                       ),
                     ),
@@ -57,15 +199,24 @@ class LoginScreen extends StatelessWidget {
 
                   const SizedBox(height: 15),
 
+                  // ================= PASSWORD =================
                   TextField(
+                    controller: passwordController,
+
                     obscureText: true,
+
                     decoration: InputDecoration(
                       hintText: 'Password',
+
                       prefixIcon: const Icon(Icons.lock_outline),
+
                       filled: true,
+
                       fillColor: const Color(0xFFF0F2F5),
+
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
+
                         borderSide: BorderSide.none,
                       ),
                     ),
@@ -73,27 +224,34 @@ class LoginScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
+                  // ================= LOGIN BUTTON =================
                   SizedBox(
                     width: 180,
                     height: 50,
+
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: isLoading ? null : login,
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
+
                         foregroundColor: Colors.black,
+
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
+
                           side: const BorderSide(color: Colors.black),
                         ),
                       ),
-                      child: const Text('LOGIN'),
+
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('LOGIN'),
                     ),
                   ),
                 ],
