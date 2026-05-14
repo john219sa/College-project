@@ -1,18 +1,27 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../psychologists/psychologist_screen.dart';
 import 'child_details_screen.dart';
+import 'package:test/core/enums/user_role.dart';
 
 class ChildrenListScreen extends StatefulWidget {
   final int familyId;
+
   final String familyName;
+
+  final bool isSpecialist;
+
+  final int specialistId;
 
   const ChildrenListScreen({
     super.key,
     required this.familyId,
     required this.familyName,
+    this.isSpecialist = false,
+    this.specialistId = 0,
   });
 
   @override
@@ -24,21 +33,32 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
   List children = [];
 
-  // ================= GET CHILDREN API =================
+  // ================= GET CHILDREN =================
 
   Future<void> getChildren() async {
     try {
-      final response = await http.get(
-        Uri.parse(
-          "http://192.168.1.2/api/children/get_children.php?family_id=${widget.familyId}",
-        ),
-      );
+      String url = '';
+
+      // ================= SPECIALIST =================
+
+      if (widget.isSpecialist) {
+        url =
+            "http://192.168.1.2/api/children/get_specialist_children.php?specialist_id=${widget.specialistId}";
+      }
+      // ================= FAMILY =================
+      else {
+        url =
+            "http://192.168.1.2/api/children/get_children.php?family_id=${widget.familyId}";
+      }
+
+      final response = await http.get(Uri.parse(url));
 
       final data = jsonDecode(response.body);
 
       if (data['status'] == true) {
         setState(() {
           children = data['data'];
+
           isLoading = false;
         });
       } else {
@@ -66,7 +86,9 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
       appBar: AppBar(
         title: Text(widget.familyName),
+
         centerTitle: true,
+
         backgroundColor: Colors.white,
       ),
 
@@ -75,15 +97,20 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
           // ================= SPECIALISTS =================
           Container(
             width: double.infinity,
+
             margin: const EdgeInsets.all(15),
+
             padding: const EdgeInsets.all(20),
 
             decoration: BoxDecoration(
               color: Colors.white,
+
               borderRadius: BorderRadius.circular(20),
+
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
+
                   blurRadius: 10,
                 ),
               ],
@@ -93,6 +120,7 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
               children: [
                 const Text(
                   'الأخصائيين المسؤولين',
+
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -104,11 +132,15 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+
                   children: [
                     _buildSpecialistButton(
                       context,
+
                       'أخصائي تخاطب',
+
                       Icons.record_voice_over,
+
                       onTap: () {},
                     ),
 
@@ -116,11 +148,15 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
                     _buildSpecialistButton(
                       context,
+
                       'أخصائي نفسي',
+
                       Icons.psychology,
+
                       onTap: () {
                         Navigator.push(
                           context,
+
                           MaterialPageRoute(
                             builder: (context) => const PsychologistScreen(),
                           ),
@@ -142,13 +178,16 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
               decoration: InputDecoration(
                 hintText: 'ابحث عن اسم الطفل...',
+
                 prefixIcon: const Icon(Icons.search),
 
                 filled: true,
+
                 fillColor: Colors.white,
 
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
+
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -185,6 +224,7 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
                           leading: const CircleAvatar(
                             backgroundColor: Colors.redAccent,
+
                             child: Icon(Icons.child_care),
                           ),
 
@@ -201,10 +241,14 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
+
                               MaterialPageRoute(
                                 builder: (context) => ChildDetailsScreen(
+                                  childId: child['id'],
+
                                   childName: child['name'],
-                                  currentUserRole: UserRole.parent,
+
+                                  currentUserRole: UserRole.specialist,
                                 ),
                               ),
                             );
@@ -219,22 +263,35 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
     );
   }
 
+  // ================= SPECIALIST BUTTON =================
+
   Widget _buildSpecialistButton(
     BuildContext context,
+
     String label,
+
     IconData icon, {
+
     required VoidCallback onTap,
   }) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: Colors.blue.withOpacity(0.1),
-          child: Icon(icon),
-        ),
-        const SizedBox(height: 5),
-        Text(label),
-      ],
+    return GestureDetector(
+      onTap: onTap,
+
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 25,
+
+            backgroundColor: Colors.blue.withOpacity(0.1),
+
+            child: Icon(icon),
+          ),
+
+          const SizedBox(height: 5),
+
+          Text(label),
+        ],
+      ),
     );
   }
 }

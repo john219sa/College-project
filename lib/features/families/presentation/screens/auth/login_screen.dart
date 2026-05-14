@@ -5,6 +5,7 @@ import '../../../../../services/auth_service.dart';
 import '../home/home_screen.dart';
 import '../children/children_list_screen.dart';
 import '../children/child_details_screen.dart';
+import 'package:test/core/enums/user_role.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await AuthService.login(
         email: emailController.text.trim(),
-
         password: passwordController.text.trim(),
       );
 
@@ -49,24 +49,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final String familyName = user['family_name'] ?? '';
 
+        final int childId = user['child_id'] ?? 0;
+
         // ================= ADMIN =================
 
         if (role == 'admin') {
           Navigator.pushReplacement(
             context,
-
             MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         }
         // ================= FAMILY MANAGER =================
-        else if (role == 'family_manager') {
+        else if (role == 'family_manager' || role == 'assistant') {
           Navigator.pushReplacement(
             context,
-
             MaterialPageRoute(
               builder: (context) => ChildrenListScreen(
                 familyId: familyId,
                 familyName: familyName,
+                isSpecialist: false,
               ),
             ),
           );
@@ -78,22 +79,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
             MaterialPageRoute(
               builder: (context) => ChildrenListScreen(
-                familyId: familyId,
-                familyName: familyName,
+                familyId: 0,
+                familyName: 'حالاتي',
+                isSpecialist: true,
+                specialistId: user['id'],
               ),
             ),
           );
         }
-        // ================= PARENT =================
-        else if (role == 'parent') {
+        // ================= CHILD =================
+        else if (role == 'child') {
           Navigator.pushReplacement(
             context,
-
             MaterialPageRoute(
               builder: (context) => ChildDetailsScreen(
+                childId: childId,
                 childName: fullName,
-
-                currentUserRole: UserRole.parent,
+                currentUserRole: UserRole.child,
               ),
             ),
           );
@@ -147,6 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
+
                     blurRadius: 20,
                   ),
                 ],
@@ -165,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
 
                       image: const DecorationImage(
-                        image: AssetImage('assets/logo.jpg'),
+                        image: AssetImage('assets/images/Logo.jpeg'),
 
                         fit: BoxFit.cover,
                       ),

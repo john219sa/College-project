@@ -11,12 +11,14 @@ class AuthService {
   }) async {
     final response = await http.post(
       Uri.parse(baseUrl),
-
       headers: {'Content-Type': 'application/json'},
-
       body: jsonEncode({'email': email, 'password': password}),
     );
 
-    return jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return {"status": false, "message": "Server error"};
+    }
   }
 }
