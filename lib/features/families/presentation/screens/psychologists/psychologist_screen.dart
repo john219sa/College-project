@@ -146,7 +146,6 @@ class PsychologistScreen extends StatelessWidget {
                   title: const Text("رفع فيديو الجلسة (MP4)"),
 
                   trailing: const Icon(Icons.video_call),
-
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("جاري اختيار الفيديو...")),

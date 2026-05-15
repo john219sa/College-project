@@ -5,7 +5,8 @@ import '../../../../../services/auth_service.dart';
 import '../home/home_screen.dart';
 import '../children/children_list_screen.dart';
 import '../children/child_details_screen.dart';
-import 'package:test/core/enums/user_role.dart';
+import 'package:college_project/core/enums/user_role.dart';
+import 'register_child_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -227,35 +228,72 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 30),
 
-                  // ================= LOGIN BUTTON =================
-                  SizedBox(
-                    width: 180,
-                    height: 50,
+                  // ================= BUTTONS =================
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ===== LOGIN =====
+                      SizedBox(
+                        width: 140,
+                        height: 50,
 
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : login,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : login,
 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
 
-                        foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
 
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                          ),
 
-                          side: const BorderSide(color: Colors.black),
+                          child: isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('LOGIN'),
                         ),
                       ),
 
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
+                      const SizedBox(width: 15),
 
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('LOGIN'),
-                    ),
+                      // ===== REGISTER =====
+                      SizedBox(
+                        width: 140,
+                        height: 50,
+
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const RegisterChildScreen(),
+                              ),
+                            );
+                          },
+
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+
+                          child: const Text('REGISTER'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

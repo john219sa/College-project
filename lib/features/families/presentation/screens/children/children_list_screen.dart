@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../psychologists/psychologist_screen.dart';
 import 'child_details_screen.dart';
-import 'package:test/core/enums/user_role.dart';
+import 'package:college_project/core/enums/user_role.dart';
 
 class ChildrenListScreen extends StatefulWidget {
   final int familyId;
@@ -244,10 +244,8 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
                               MaterialPageRoute(
                                 builder: (context) => ChildDetailsScreen(
-                                  childId: child['id'],
-
+                                  childId: int.parse(child['id']),
                                   childName: child['name'],
-
                                   currentUserRole: UserRole.specialist,
                                 ),
                               ),

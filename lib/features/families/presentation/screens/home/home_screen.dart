@@ -8,6 +8,12 @@ import '../../../../../shared/widgets/custom_drawer.dart';
 
 import '../../../../../core/constants/api_constants.dart';
 
+import '../psychologists/psychologist_screen.dart';
+import '../waiting_list_screen.dart';
+import '../reports_screen.dart';
+import '../notifications_screen.dart';
+import '../schedule_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -208,40 +214,75 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   GridView.count(
                     shrinkWrap: true,
-
                     physics: const NeverScrollableScrollPhysics(),
-
                     crossAxisCount: 2,
-
                     mainAxisSpacing: 15,
-
                     crossAxisSpacing: 15,
-
                     childAspectRatio: 1.4,
 
                     children: [
+                      // إضافة حالة
                       _buildGridItem(
-                        'إضافة حالة',
+                        'قائمه الانتظار ',
                         Icons.person_add_rounded,
                         Colors.green,
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const WaitingListScreen(),
+                            ),
+                          );
+                        },
                       ),
 
+                      // التقارير
                       _buildGridItem(
                         'التقارير',
                         Icons.insert_chart_outlined,
                         Colors.purple,
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportsScreen(),
+                            ),
+                          );
+                        },
                       ),
 
+                      // الجدول
                       _buildGridItem(
                         'الجدول',
                         Icons.event_note_rounded,
                         Colors.red,
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ScheduleScreen(),
+                            ),
+                          );
+                        },
                       ),
 
+                      // الإشعارات
                       _buildGridItem(
                         'الإشعارات',
                         Icons.notifications_active_outlined,
                         Colors.amber,
+
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -304,35 +345,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ================= GRID ITEM =================
 
-  Widget _buildGridItem(String title, IconData icon, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+  Widget _buildGridItem(
+    String title,
+    IconData icon,
+    Color color, {
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
 
-        borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-          ),
-        ],
-      ),
+          borderRadius: BorderRadius.circular(20),
 
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+            ),
+          ],
+        ),
 
-        children: [
-          Icon(icon, color: color, size: 35),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
 
-          const SizedBox(height: 8),
+          children: [
+            Icon(icon, color: color, size: 35),
 
-          Text(
-            title,
+            const SizedBox(height: 8),
 
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          ),
-        ],
+            Text(
+              title,
+
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            ),
+          ],
+        ),
       ),
     );
   }
