@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import '../../../../../core/constants/api_constants.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +46,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-          "http://192.168.1.2/api/children/get_child_details.php?child_id=${widget.childId}",
+          "${ApiConstants.baseUrl}/children/get_child_details.php?child_id=${widget.childId}",
         ),
       );
 

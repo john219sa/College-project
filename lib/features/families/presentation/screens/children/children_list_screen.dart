@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
+import '../../../../../core/constants/api_constants.dart';
 import '../psychologists/psychologist_screen.dart';
 import 'child_details_screen.dart';
 import 'package:college_project/core/enums/user_role.dart';
@@ -43,12 +43,12 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
       if (widget.isSpecialist) {
         url =
-            "http://192.168.1.2/api/children/get_specialist_children.php?specialist_id=${widget.specialistId}";
+            "${ApiConstants.baseUrl}/children/get_specialist_children.php?specialist_id=${widget.specialistId}";
       }
       // ================= FAMILY =================
       else {
         url =
-            "http://192.168.1.2/api/children/get_children.php?family_id=${widget.familyId}";
+            "${ApiConstants.baseUrl}/children/get_children.php?family_id=${widget.familyId}";
       }
 
       final response = await http.get(Uri.parse(url));

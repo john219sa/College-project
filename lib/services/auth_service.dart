@@ -1,9 +1,9 @@
 import 'dart:convert';
-
+import '../../../../../core/constants/api_constants.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.1.2/api/auth/login.php';
+  static const String baseUrl = '${ApiConstants.baseUrl}/auth/login.php';
 
   static Future<Map<String, dynamic>> login({
     required String email,
