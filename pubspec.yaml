@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  image_picker: ^1.1.2
   url_launcher: ^6.2.5
   http: ^1.2.1
   file_picker: ^8.0.0

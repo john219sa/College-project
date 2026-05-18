@@ -269,27 +269,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         width: 140,
                         height: 50,
-
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
+                                // ← مش محتاج params — هيبعت null تلقائياً
                                 builder: (context) =>
                                     const RegisterChildScreen(),
                               ),
                             );
                           },
-
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
-
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-
                           child: const Text('REGISTER'),
                         ),
                       ),

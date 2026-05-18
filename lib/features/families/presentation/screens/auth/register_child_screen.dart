@@ -1,23 +1,27 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../../../../../core/constants/api_constants.dart';
 
 class RegisterChildScreen extends StatefulWidget {
-  const RegisterChildScreen({super.key});
+  final int? createdBy;
+  final int? familyId;
+
+  const RegisterChildScreen({super.key, this.createdBy, this.familyId});
 
   @override
   State<RegisterChildScreen> createState() => _RegisterChildScreenState();
 }
 
 class _RegisterChildScreenState extends State<RegisterChildScreen> {
-  // معرفات التحكم في النصوص
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-
-  // الإضافة الجديدة: معرفات اليوزر نيم والباسورد
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool _isPasswordVisible = false; // للتحكم في إظهار/إخفاء الباسورد
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   String selectedService = 'جلسات تكامل';
   final List<String> serviceOptions = [
@@ -28,6 +32,86 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     'تنمية مهارات',
     'أكاديمي',
   ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    _phoneController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registerChild() async {
+    if (_nameController.text.trim().isEmpty) {
+      _showSnackBar('يرجى إدخال اسم الطفل', isError: true);
+      return;
+    }
+    if (_phoneController.text.trim().isEmpty) {
+      _showSnackBar('يرجى إدخال رقم الهاتف', isError: true);
+      return;
+    }
+    if (_usernameController.text.trim().isEmpty) {
+      _showSnackBar('يرجى إدخال اسم المستخدم', isError: true);
+      return;
+    }
+    if (_passwordController.text.trim().isEmpty) {
+      _showSnackBar('يرجى إدخال كلمة المرور', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('${ApiConstants.baseUrl}/children/register_child.php'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'name': _nameController.text.trim(),
+              'age': int.tryParse(_ageController.text.trim()) ?? 0,
+              'phone': _phoneController.text.trim(),
+              'service_type': selectedService,
+              'email': _usernameController.text.trim(),
+              'password': _passwordController.text.trim(),
+              'created_by': widget.createdBy ?? 0,
+              'family_id': widget.familyId ?? 0,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+
+      if (data['status'] == true) {
+        _showSnackBar(
+          'تم التسجيل بنجاح — في انتظار موافقة الإدارة',
+          isError: false,
+        );
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) Navigator.pop(context);
+      } else {
+        _showSnackBar(
+          data['message'] ?? 'حدث خطأ، حاول مرة أخرى',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      _showSnackBar('تعذر الاتصال بالخادم', isError: true);
+      debugPrint('RegisterChild error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSnackBar(String msg, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +141,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
               ),
             ),
             const SizedBox(height: 25),
-
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -82,7 +165,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     ),
                   ),
                   const Divider(height: 30),
-
                   _buildTextField(
                     label: 'اسم الطفل',
                     hint: 'أدخل الاسم الثلاثي',
@@ -90,7 +172,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     icon: Icons.child_care,
                   ),
                   const SizedBox(height: 15),
-
                   Row(
                     children: [
                       Expanded(
@@ -115,7 +196,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   const Text(
                     'نوع الخدمة المطلوبة:',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -123,8 +203,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                   const SizedBox(height: 8),
                   _buildDropdown(),
                   const SizedBox(height: 30),
-
-                  // --- الجزء الجديد: بيانات الحساب المستقبلي ---
                   const Text(
                     'بيانات الحساب (في حالة القبول)',
                     style: TextStyle(
@@ -134,7 +212,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     ),
                   ),
                   const Divider(height: 30),
-
                   _buildTextField(
                     label: 'اسم المستخدم (User Name)',
                     hint: 'مثال: ahmed_2024',
@@ -142,7 +219,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     icon: Icons.person_outline,
                   ),
                   const SizedBox(height: 15),
-
                   _buildTextField(
                     label: 'كلمة المرور (Password)',
                     hint: 'أدخل كلمة مرور قوية',
@@ -150,23 +226,11 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                     icon: Icons.lock_outline,
                     isPassword: true,
                   ),
-
                   const SizedBox(height: 40),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // كود الحفظ
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'تم تسجيل بيانات الطفل والحساب بنجاح',
-                            ),
-                          ),
-                        );
-                        Navigator.pop(context);
-                      },
+                      onPressed: _isLoading ? null : _registerChild,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blueAccent,
                         foregroundColor: Colors.white,
@@ -175,14 +239,26 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                         elevation: 0,
-                      ),
-                      child: const Text(
-                        'إتمام التسجيل',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        disabledBackgroundColor: Colors.blueAccent.withValues(
+                          alpha: 0.5,
                         ),
                       ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'إتمام التسجيل',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -194,7 +270,6 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
     );
   }
 
-  // ودجت القائمة المنسدلة
   Widget _buildDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -220,13 +295,14 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
               ),
             );
           }).toList(),
-          onChanged: (newValue) => setState(() => selectedService = newValue!),
+          onChanged: _isLoading
+              ? null
+              : (newValue) => setState(() => selectedService = newValue!),
         ),
       ),
     );
   }
 
-  // ودجت حقول النص (تم تحديثها لدعم كلمة المرور)
   Widget _buildTextField({
     required String label,
     required String hint,
@@ -248,6 +324,7 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
           textAlign: TextAlign.right,
           keyboardType: keyboardType,
           obscureText: isPassword ? !_isPasswordVisible : false,
+          enabled: !_isLoading,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: isPassword
