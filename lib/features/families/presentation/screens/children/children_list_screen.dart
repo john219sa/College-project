@@ -16,12 +16,18 @@ class ChildrenListScreen extends StatefulWidget {
 
   final int specialistId;
 
+  final UserRole currentUserRole; // ← جديد
+
+  final int currentUserId; // ← جديد
+
   const ChildrenListScreen({
     super.key,
     required this.familyId,
     required this.familyName,
     this.isSpecialist = false,
     this.specialistId = 0,
+    this.currentUserRole = UserRole.familyManager, // ← default
+    this.currentUserId = 0, // ← default
   });
 
   @override
@@ -244,9 +250,12 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
 
                               MaterialPageRoute(
                                 builder: (context) => ChildDetailsScreen(
-                                  childId: int.parse(child['id']),
+                                  childId: int.parse(child['id'].toString()),
                                   childName: child['name'],
-                                  currentUserRole: UserRole.specialist,
+                                  currentUserRole:
+                                      widget.currentUserRole, // ← مُصلح
+                                  currentUserId:
+                                      widget.currentUserId, // ← مُصلح
                                 ),
                               ),
                             );

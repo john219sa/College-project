@@ -7,7 +7,7 @@ import '../children/children_list_screen.dart';
 import '../../../../../shared/widgets/custom_drawer.dart';
 
 import '../../../../../core/constants/api_constants.dart';
-
+import '../psychologists/specialist_curriculum_screens.dart';
 import '../psychologists/psychologist_screen.dart';
 import '../waiting_list_screen.dart';
 import '../reports_screen.dart';
@@ -268,7 +268,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-
+                      // رفع المنهج
+                      _buildGridItem(
+                        'رفع المنهج',
+                        Icons.upload_file_rounded,
+                        Colors.indigo,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const SpecialistSelectionScreen(),
+                            ),
+                          );
+                        },
+                      ),
                       // الإشعارات
                       _buildGridItem(
                         'الإشعارات',

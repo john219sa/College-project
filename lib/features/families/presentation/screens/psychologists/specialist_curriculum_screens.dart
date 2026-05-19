@@ -20,17 +20,14 @@ class SpecialistSelectionScreen extends StatefulWidget {
 class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
   bool isLoading = true;
 
-  // بيانات الأخصائيين مجمّعة حسب التخصص
   Map<String, List<Map<String, dynamic>>> groupedSpecialists = {
     'speech': [],
     'psychologist': [],
     'behavior': [],
   };
 
-  // الأخصائيين المحددين
   Set<int> selectedIds = {};
 
-  // ألوان وأسماء كل تخصص
   final Map<String, Map<String, dynamic>> specialistMeta = {
     'speech': {
       'label': 'أخصائيو التخاطب',
@@ -79,15 +76,20 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
           'behavior': <Map<String, dynamic>>[],
         };
         for (var sp in list) {
-          final type = sp['specialist_type'] ?? '';
+          final type = sp['specialist_type']?.toString() ?? '';
           if (grouped.containsKey(type)) {
-            grouped[type]!.add(Map<String, dynamic>.from(sp));
+            // ✅ نحوّل id لـ int هنا مباشرة
+            final item = Map<String, dynamic>.from(sp);
+            item['id'] = int.tryParse(sp['id'].toString()) ?? 0;
+            grouped[type]!.add(item);
           }
         }
         setState(() {
           groupedSpecialists = grouped;
           isLoading = false;
         });
+      } else {
+        setState(() => isLoading = false);
       }
     } catch (_) {
       setState(() => isLoading = false);
@@ -220,7 +222,6 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
                               padding: const EdgeInsets.all(12),
                               child: Row(
                                 children: [
-                                  // تحديد الكل
                                   GestureDetector(
                                     onTap: list.isEmpty
                                         ? null
@@ -252,7 +253,6 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  // اسم المجموعة
                                   Text(
                                     meta['label'] as String,
                                     style: TextStyle(
@@ -340,7 +340,8 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
                                               if (selected)
                                                 const SizedBox(width: 6),
                                               Text(
-                                                sp['full_name'] ?? '',
+                                                sp['full_name']?.toString() ??
+                                                    '',
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
@@ -422,14 +423,12 @@ class UploadCurriculumScreen extends StatefulWidget {
 }
 
 class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
-  // ─── Controllers ────────────────────────────────────────
   final _commentController = TextEditingController();
   final _exerciseController = TextEditingController();
   final _treatmentController = TextEditingController();
 
   bool _isLoading = false;
 
-  // ─── Files ──────────────────────────────────────────────
   List<PlatformFile> _pdfFiles = [];
   List<XFile> _imageFiles = [];
   String? _videoPath;
@@ -442,7 +441,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
     super.dispose();
   }
 
-  // ─── Pick PDF ───────────────────────────────────────────
   Future<void> _pickPdf() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -454,7 +452,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
     }
   }
 
-  // ─── Pick Images ────────────────────────────────────────
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final images = await picker.pickMultiImage();
@@ -463,7 +460,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
     }
   }
 
-  // ─── Pick Video ─────────────────────────────────────────
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
     final video = await picker.pickVideo(source: ImageSource.gallery);
@@ -472,7 +468,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
     }
   }
 
-  // ─── Upload ─────────────────────────────────────────────
   Future<void> _upload() async {
     if (_commentController.text.trim().isEmpty &&
         _exerciseController.text.trim().isEmpty &&
@@ -492,7 +487,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
       );
       final request = http.MultipartRequest('POST', uri);
 
-      // Text fields
       request.fields['specialist_ids'] = jsonEncode(
         widget.selectedSpecialistIds,
       );
@@ -500,7 +494,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
       request.fields['exercise'] = _exerciseController.text.trim();
       request.fields['treatment'] = _treatmentController.text.trim();
 
-      // PDFs
       for (final pdf in _pdfFiles) {
         if (pdf.path != null) {
           request.files.add(
@@ -513,7 +506,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
         }
       }
 
-      // Images
       for (final img in _imageFiles) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -524,7 +516,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
         );
       }
 
-      // Video
       if (_videoPath != null) {
         request.files.add(
           await http.MultipartFile.fromPath('video', _videoPath!),
@@ -561,9 +552,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // BUILD
-  // ════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -607,7 +595,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // ── التعليقات ──────────────────────────────────
             _buildTextSection(
               title: 'التعليقات',
               hint: 'اكتب تعليقك هنا...',
@@ -617,7 +604,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── التمارين ───────────────────────────────────
             _buildTextSection(
               title: 'التمارين',
               hint: 'اكتب تفاصيل التمرين...',
@@ -627,7 +613,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── العلاج ─────────────────────────────────────
             _buildTextSection(
               title: 'الخطة العلاجية',
               hint: 'اكتب الخطة العلاجية...',
@@ -637,7 +622,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── PDF ────────────────────────────────────────
             _buildFileSection(
               title: 'رفع PDF',
               icon: Icons.picture_as_pdf,
@@ -662,7 +646,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── صور ────────────────────────────────────────
             _buildFileSection(
               title: 'رفع صور',
               icon: Icons.image_outlined,
@@ -684,7 +667,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── فيديو ──────────────────────────────────────
             _buildFileSection(
               title: 'رفع فيديو',
               icon: Icons.videocam_outlined,
@@ -696,7 +678,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             ),
             const SizedBox(height: 30),
 
-            // ── زرار الرفع ─────────────────────────────────
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -730,8 +711,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
       ),
     );
   }
-
-  // ─── Widgets ────────────────────────────────────────────
 
   Widget _buildTextSection({
     required String title,

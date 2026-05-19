@@ -7,6 +7,7 @@ import '../children/children_list_screen.dart';
 import '../children/child_details_screen.dart';
 import 'package:college_project/core/enums/user_role.dart';
 import 'register_child_screen.dart';
+import '../psychologists/specialist_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,11 +47,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final String fullName = user['full_name'] ?? '';
 
-        final int familyId = user['family_id'] ?? 0;
+        final int userId = int.tryParse(user['id'].toString()) ?? 0; // ← جديد
+
+        final int familyId = int.tryParse(user['family_id'].toString()) ?? 0;
 
         final String familyName = user['family_name'] ?? '';
 
-        final int childId = user['child_id'] ?? 0;
+        final int childId = int.tryParse(user['child_id'].toString()) ?? 0;
 
         // ================= ADMIN =================
 
@@ -69,6 +72,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 familyId: familyId,
                 familyName: familyName,
                 isSpecialist: false,
+                currentUserRole: role == 'assistant'
+                    ? UserRole.assistant
+                    : UserRole.familyManager,
+                currentUserId: userId,
               ),
             ),
           );
@@ -77,13 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
         else if (role == 'specialist') {
           Navigator.pushReplacement(
             context,
-
             MaterialPageRoute(
-              builder: (context) => ChildrenListScreen(
-                familyId: 0,
-                familyName: 'حالاتي',
-                isSpecialist: true,
-                specialistId: user['id'],
+              builder: (context) => SpecialistDashboardScreen(
+                specialistId: userId,
+                specialistName: fullName,
+                specialistType: user['specialist_type'] ?? '',
               ),
             ),
           );
@@ -97,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 childId: childId,
                 childName: fullName,
                 currentUserRole: UserRole.child,
+                currentUserId: userId, // ← مُصلح
               ),
             ),
           );
@@ -274,7 +280,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                // ← مش محتاج params — هيبعت null تلقائياً
                                 builder: (context) =>
                                     const RegisterChildScreen(),
                               ),
