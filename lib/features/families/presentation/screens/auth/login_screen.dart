@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final String fullName = user['full_name'] ?? '';
 
-        final int userId = int.tryParse(user['id'].toString()) ?? 0; // ← جديد
+        final int userId = int.tryParse(user['id'].toString()) ?? 0;
 
         final int familyId = int.tryParse(user['family_id'].toString()) ?? 0;
 
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 childId: childId,
                 childName: fullName,
                 currentUserRole: UserRole.child,
-                currentUserId: userId, // ← مُصلح
+                currentUserId: userId,
               ),
             ),
           );
@@ -236,63 +236,65 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ================= BUTTONS =================
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // ===== LOGIN =====
-                      SizedBox(
-                        width: 140,
-                        height: 50,
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: isLoading ? null : login,
 
-                        child: ElevatedButton(
-                          onPressed: isLoading ? null : login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
 
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
 
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-
-                              side: const BorderSide(color: Colors.black),
+                                side: const BorderSide(color: Colors.black),
+                              ),
                             ),
-                          ),
 
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('LOGIN'),
+                            child: isLoading
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('LOGIN'),
+                          ),
                         ),
                       ),
 
                       const SizedBox(width: 15),
 
                       // ===== REGISTER =====
-                      SizedBox(
-                        width: 140,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const RegisterChildScreen(),
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RegisterChildScreen(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                side: const BorderSide(color: Colors.black),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
                             ),
+                            child: const Text('REGISTER'),
                           ),
-                          child: const Text('REGISTER'),
                         ),
                       ),
                     ],

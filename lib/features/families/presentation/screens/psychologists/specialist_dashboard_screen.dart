@@ -251,13 +251,11 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                         children: [
                           CircleAvatar(
                             radius: 45,
+                            backgroundImage: const AssetImage(
+                              'assets/images/bassant.jpg',
+                            ), // ← غيّر الاسم
                             backgroundColor: Colors.white.withValues(
                               alpha: 0.2,
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 50,
                             ),
                           ),
                           const SizedBox(height: 12),

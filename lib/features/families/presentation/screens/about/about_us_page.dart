@@ -43,43 +43,29 @@ class AboutUsPage extends StatelessWidget {
         name: "مينا رضا",
         role: "أخصائي تخاطب",
         imagePath: 'assets/images/mina.jpg',
-        facebookUrl: 'https://facebook.com/...',
+        facebookUrl: 'https://www.facebook.com/share/18YX7dBSr2/',
         email: 'minareda70529714@gmail.com',
       ),
       TeamMember(
         name: "جاسر محمد",
         role: "أخصائي تعديل سلوك",
         imagePath: 'assets/images/gasser.jpg',
-        facebookUrl: 'https://facebook.com/...',
+        facebookUrl: 'https://www.facebook.com/share/1GyDsygioF/',
         email: 'gaser8375@gmail.com',
       ),
       TeamMember(
         name: "جون صفوت",
         role: " أخصائي تنمية مهارات",
         imagePath: 'assets/images/john.jpg',
-        facebookUrl: 'https://facebook.com/...',
+        facebookUrl: 'https://www.facebook.com/share/1GGcDxwWsW/',
         email: 'John219saf@gmail.com',
       ),
       TeamMember(
-        name: "اسراء محمد ",
-        role: "أخصائي نفسي",
-        imagePath: 'assets/images/esraa.jpg',
-        facebookUrl: '',
-        email: '',
-      ),
-      TeamMember(
-        name: "عمرو محمد",
+        name: "فاطمة محمد",
         role: "أخصائي علاج طبيعي",
-        imagePath: 'assets/images/amr.jpg',
-        facebookUrl: 'https://facebook.com/...',
-        email: 'amr.ismmail@gmail.com',
-      ),
-      TeamMember(
-        name: "منه الله حسن",
-        role: "أخصائي صعوبات تعلم",
-        imagePath: 'assets/images/menna.jpg',
-        facebookUrl: 'https://facebook.com/...',
-        email: 'manona2512@gmail.com',
+        imagePath: 'assets/images/fatma.jpg',
+        facebookUrl: 'https://www.facebook.com/share/1CdDUy6Rse/',
+        email: 'fatma@gmail.com',
       ),
     ];
     return Scaffold(
@@ -132,9 +118,7 @@ class AboutUsPage extends StatelessWidget {
           width: double.infinity,
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage(
-                'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070',
-              ),
+              image: AssetImage('assets/images/about.jpg'), // ← غيّر الاسم هنا
               fit: BoxFit.cover,
             ),
           ),
@@ -167,11 +151,10 @@ class AboutUsPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _largeLeaderItem(
-          "بسنت مجدي",
-          "Creative Leader",
+          "بسنت مجدى",
+          "Team leader",
           'assets/images/bassant.jpg',
         ),
-        _largeLeaderItem("فاطمة محمد", "Manager", 'assets/images/fatma.jpg'),
       ],
     );
   }
@@ -312,7 +295,7 @@ class AboutUsPage extends StatelessWidget {
                   Icons.facebook,
                   "فيسبوك",
                   const Color(0xff1877F2),
-                  () => _openURL('https://facebook.com/...'),
+                  () => _openURL('https://www.facebook.com/share/1CdDUy6Rse/'),
                 ),
               ),
               const SizedBox(width: 15),

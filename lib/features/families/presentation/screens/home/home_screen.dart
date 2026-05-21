@@ -120,6 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           const SizedBox(width: double.infinity),
 
+                          // ================= PROFILE IMAGE =================
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -130,13 +131,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: const CircleAvatar(
                               radius: 50,
 
-                              backgroundColor: Colors.white24,
-
-                              child: Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Colors.white,
+                              backgroundImage: AssetImage(
+                                'assets/images/john.jpg', // ← غيّر اسم الصورة هنا
                               ),
+
+                              backgroundColor: Colors.white24,
                             ),
                           ),
 
@@ -221,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     childAspectRatio: 1.4,
 
                     children: [
-                      // إضافة حالة
+                      // قائمة الانتظار
                       _buildGridItem(
                         'قائمه الانتظار ',
                         Icons.person_add_rounded,
@@ -268,11 +267,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
+
                       // رفع المنهج
                       _buildGridItem(
                         'رفع المنهج',
                         Icons.upload_file_rounded,
                         Colors.indigo,
+
                         onTap: () {
                           Navigator.push(
                             context,
@@ -283,6 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
+
                       // الإشعارات
                       _buildGridItem(
                         'الإشعارات',
