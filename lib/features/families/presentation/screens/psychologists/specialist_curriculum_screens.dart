@@ -5,12 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../../core/constants/api_constants.dart';
+import '../psychologists/specialist_curriculum_screens.dart';
 
-// ════════════════════════════════════════════════════════════════
-// STEP 1 — اختيار الأخصائيين
-// ════════════════════════════════════════════════════════════════
 class SpecialistSelectionScreen extends StatefulWidget {
-  const SpecialistSelectionScreen({super.key});
+  final int familyId;
+  const SpecialistSelectionScreen({super.key, this.familyId = 0});
 
   @override
   State<SpecialistSelectionScreen> createState() =>
@@ -19,13 +18,7 @@ class SpecialistSelectionScreen extends StatefulWidget {
 
 class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
   bool isLoading = true;
-
-  Map<String, List<Map<String, dynamic>>> groupedSpecialists = {
-    'speech': [],
-    'psychologist': [],
-    'behavior': [],
-  };
-
+  Map<String, List<Map<String, dynamic>>> groupedSpecialists = {};
   Set<int> selectedIds = {};
 
   final Map<String, Map<String, dynamic>> specialistMeta = {
@@ -50,6 +43,20 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
       'icon': Icons.self_improvement,
       'iconColor': const Color(0xFF1565C0),
     },
+    'special_education': {
+      'label': 'أخصائيو التربية الخاصة',
+      'color': const Color(0xFFF3E5F5),
+      'border': const Color(0xFFAB47BC),
+      'icon': Icons.school,
+      'iconColor': const Color(0xFF6A1B9A),
+    },
+    'occupational_therapy': {
+      'label': 'أخصائيو العلاج الوظيفي',
+      'color': const Color(0xFFE0F2F1),
+      'border': const Color(0xFF26A69A),
+      'icon': Icons.accessibility_new,
+      'iconColor': const Color(0xFF00695C),
+    },
   };
 
   @override
@@ -60,30 +67,28 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
 
   Future<void> _loadSpecialists() async {
     try {
+      final url = widget.familyId > 0
+          ? '${ApiConstants.baseUrl}/specialists/get_all_specialists.php?family_id=${widget.familyId}'
+          : '${ApiConstants.baseUrl}/specialists/get_all_specialists.php?all=1';
+
       final res = await http
-          .get(
-            Uri.parse(
-              '${ApiConstants.baseUrl}/specialists/get_all_specialists.php',
-            ),
-          )
+          .get(Uri.parse(url))
           .timeout(const Duration(seconds: 15));
       final data = jsonDecode(res.body);
+
       if (data['status'] == true) {
         final List list = data['data'];
-        final grouped = {
-          'speech': <Map<String, dynamic>>[],
-          'psychologist': <Map<String, dynamic>>[],
-          'behavior': <Map<String, dynamic>>[],
-        };
+        final grouped = <String, List<Map<String, dynamic>>>{};
+
         for (var sp in list) {
           final type = sp['specialist_type']?.toString() ?? '';
-          if (grouped.containsKey(type)) {
-            // ✅ نحوّل id لـ int هنا مباشرة
-            final item = Map<String, dynamic>.from(sp);
-            item['id'] = int.tryParse(sp['id'].toString()) ?? 0;
-            grouped[type]!.add(item);
-          }
+          if (type.isEmpty) continue;
+          grouped.putIfAbsent(type, () => []);
+          final item = Map<String, dynamic>.from(sp);
+          item['id'] = int.tryParse(sp['id'].toString()) ?? 0;
+          grouped[type]!.add(item);
         }
+
         setState(() {
           groupedSpecialists = grouped;
           isLoading = false;
@@ -120,6 +125,17 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
     });
   }
 
+  Map<String, dynamic> _getMeta(String type) {
+    return specialistMeta[type] ??
+        {
+          'label': type,
+          'color': const Color(0xFFF4F7FA),
+          'border': Colors.grey,
+          'icon': Icons.person,
+          'iconColor': Colors.grey,
+        };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,7 +164,7 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
+                        color: Colors.black.withOpacity(0.04),
                         blurRadius: 10,
                       ),
                     ],
@@ -158,7 +174,7 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6A11CB).withValues(alpha: 0.1),
+                          color: const Color(0xFF6A11CB).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -194,174 +210,210 @@ class _SpecialistSelectionScreenState extends State<SpecialistSelectionScreen> {
 
                 // ── Groups ──────────────────────────────────
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: specialistMeta.keys.map((type) {
-                      final meta = specialistMeta[type]!;
-                      final list = groupedSpecialists[type]!;
-                      final allSel =
-                          list.isNotEmpty &&
-                          list.every(
-                            (e) => selectedIds.contains(e['id'] as int),
-                          );
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: meta['color'] as Color,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: meta['border'] as Color,
-                            width: 1.5,
+                  child: groupedSpecialists.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_off_outlined,
+                                size: 60,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'لا يوجد أخصائيون',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            // ── Group header ──
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: groupedSpecialists.keys.map((type) {
+                            final meta = _getMeta(type);
+                            final list = groupedSpecialists[type]!;
+                            final allSel =
+                                list.isNotEmpty &&
+                                list.every(
+                                  (e) => selectedIds.contains(e['id'] as int),
+                                );
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: meta['color'] as Color,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: meta['border'] as Color,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
                                 children: [
-                                  GestureDetector(
-                                    onTap: list.isEmpty
-                                        ? null
-                                        : () => _toggleAll(type),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: allSel
-                                            ? meta['border'] as Color
-                                            : Colors.white,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: meta['border'] as Color,
+                                  // ── Group header ──
+                                  Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: list.isEmpty
+                                              ? null
+                                              : () => _toggleAll(type),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: allSel
+                                                  ? meta['border'] as Color
+                                                  : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: meta['border'] as Color,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              allSel
+                                                  ? 'إلغاء الكل'
+                                                  : 'تحديد الكل',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: allSel
+                                                    ? Colors.white
+                                                    : meta['iconColor']
+                                                          as Color,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      child: Text(
-                                        allSel ? 'إلغاء الكل' : 'تحديد الكل',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: allSel
-                                              ? Colors.white
-                                              : meta['iconColor'] as Color,
-                                          fontWeight: FontWeight.bold,
+                                        const Spacer(),
+                                        Text(
+                                          meta['label'] as String,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: meta['iconColor'] as Color,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          meta['icon'] as IconData,
+                                          color: meta['iconColor'] as Color,
+                                          size: 22,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const Spacer(),
-                                  Text(
-                                    meta['label'] as String,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: meta['iconColor'] as Color,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    meta['icon'] as IconData,
-                                    color: meta['iconColor'] as Color,
-                                    size: 22,
-                                  ),
+
+                                  const Divider(height: 1),
+
+                                  // ── Specialist cards ──
+                                  list.isEmpty
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Text(
+                                            'لا يوجد أخصائيون',
+                                            style: TextStyle(
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                        )
+                                      : Padding(
+                                          padding: const EdgeInsets.all(8),
+                                          child: Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: list.map((sp) {
+                                              final id = sp['id'] as int;
+                                              final selected = selectedIds
+                                                  .contains(id);
+                                              return GestureDetector(
+                                                onTap: () => _toggleOne(id),
+                                                child: AnimatedContainer(
+                                                  duration: const Duration(
+                                                    milliseconds: 200,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 14,
+                                                        vertical: 10,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: selected
+                                                        ? meta['border']
+                                                              as Color
+                                                        : Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    border: Border.all(
+                                                      color:
+                                                          meta['border']
+                                                              as Color,
+                                                      width: selected ? 0 : 1,
+                                                    ),
+                                                    boxShadow: selected
+                                                        ? [
+                                                            BoxShadow(
+                                                              color:
+                                                                  (meta['border']
+                                                                          as Color)
+                                                                      .withOpacity(
+                                                                        0.3,
+                                                                      ),
+                                                              blurRadius: 8,
+                                                            ),
+                                                          ]
+                                                        : [],
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      if (selected) ...[
+                                                        const Icon(
+                                                          Icons.check_circle,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                      ],
+                                                      Text(
+                                                        sp['full_name']
+                                                                ?.toString() ??
+                                                            '',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: selected
+                                                              ? Colors.white
+                                                              : Colors.black87,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                  const SizedBox(height: 8),
                                 ],
                               ),
-                            ),
-
-                            const Divider(height: 1),
-
-                            // ── Specialist cards ──
-                            list.isEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Text(
-                                      'لا يوجد أخصائيون',
-                                      style: TextStyle(color: Colors.grey[500]),
-                                    ),
-                                  )
-                                : Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: list.map((sp) {
-                                      final id = sp['id'] as int;
-                                      final selected = selectedIds.contains(id);
-                                      return GestureDetector(
-                                        onTap: () => _toggleOne(id),
-                                        child: AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 200,
-                                          ),
-                                          margin: const EdgeInsets.only(
-                                            bottom: 4,
-                                            left: 8,
-                                            right: 8,
-                                          ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 10,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: selected
-                                                ? meta['border'] as Color
-                                                : Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            border: Border.all(
-                                              color: meta['border'] as Color,
-                                              width: selected ? 0 : 1,
-                                            ),
-                                            boxShadow: selected
-                                                ? [
-                                                    BoxShadow(
-                                                      color:
-                                                          (meta['border']
-                                                                  as Color)
-                                                              .withValues(
-                                                                alpha: 0.3,
-                                                              ),
-                                                      blurRadius: 8,
-                                                    ),
-                                                  ]
-                                                : [],
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if (selected)
-                                                const Icon(
-                                                  Icons.check_circle,
-                                                  color: Colors.white,
-                                                  size: 16,
-                                                ),
-                                              if (selected)
-                                                const SizedBox(width: 6),
-                                              Text(
-                                                sp['full_name']?.toString() ??
-                                                    '',
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: selected
-                                                      ? Colors.white
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                            const SizedBox(height: 8),
-                          ],
+                            );
+                          }).toList(),
                         ),
-                      );
-                    }).toList(),
-                  ),
                 ),
 
                 // ── زرار رفع المنهج ─────────────────────────
@@ -428,7 +480,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
   final _treatmentController = TextEditingController();
 
   bool _isLoading = false;
-
   List<PlatformFile> _pdfFiles = [];
   List<XFile> _imageFiles = [];
   String? _videoPath;
@@ -447,25 +498,19 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
       allowedExtensions: ['pdf'],
       allowMultiple: true,
     );
-    if (result != null) {
-      setState(() => _pdfFiles = result.files);
-    }
+    if (result != null) setState(() => _pdfFiles = result.files);
   }
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final images = await picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      setState(() => _imageFiles = images);
-    }
+    if (images.isNotEmpty) setState(() => _imageFiles = images);
   }
 
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
     final video = await picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      setState(() => _videoPath = video.path);
-    }
+    if (video != null) setState(() => _videoPath = video.path);
   }
 
   Future<void> _upload() async {
@@ -575,7 +620,7 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6A11CB).withValues(alpha: 0.1),
+                  color: const Color(0xFF6A11CB).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -603,7 +648,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
               color: const Color(0xFF6A11CB),
             ),
             const SizedBox(height: 16),
-
             _buildTextSection(
               title: 'التمارين',
               hint: 'اكتب تفاصيل التمرين...',
@@ -612,7 +656,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
               color: Colors.deepOrange,
             ),
             const SizedBox(height: 16),
-
             _buildTextSection(
               title: 'الخطة العلاجية',
               hint: 'اكتب الخطة العلاجية...',
@@ -621,7 +664,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
               color: Colors.teal,
             ),
             const SizedBox(height: 16),
-
             _buildFileSection(
               title: 'رفع PDF',
               icon: Icons.picture_as_pdf,
@@ -645,7 +687,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
                     ),
             ),
             const SizedBox(height: 16),
-
             _buildFileSection(
               title: 'رفع صور',
               icon: Icons.image_outlined,
@@ -666,7 +707,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
                     ),
             ),
             const SizedBox(height: 16),
-
             _buildFileSection(
               title: 'رفع فيديو',
               icon: Icons.videocam_outlined,
@@ -677,7 +717,6 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
               onTap: _pickVideo,
             ),
             const SizedBox(height: 30),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -725,10 +764,7 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -760,15 +796,11 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
               fillColor: Colors.grey[50],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                ),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                ),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
               ),
             ),
           ),
@@ -791,10 +823,7 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -822,7 +851,7 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
             icon: Icon(Icons.attach_file, color: color),
             label: Text(subtitle, style: TextStyle(color: color)),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: color.withValues(alpha: 0.4)),
+              side: BorderSide(color: color.withOpacity(0.4)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -840,9 +869,9 @@ class _UploadCurriculumScreenState extends State<UploadCurriculumScreen> {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
