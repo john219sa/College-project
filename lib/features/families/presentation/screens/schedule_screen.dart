@@ -65,19 +65,36 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     super.dispose();
   }
 
-  // ── scroll على اليوم ─────────────────────────────────────────
+  // ✅ scrollToToday مضمون بـ addPostFrameCallback
   void _scrollToToday({bool animate = true}) {
-    final offset = _dayRange * _dayItemWidth;
-    if (!_dateScrollController.hasClients) return;
-    if (animate) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dateScrollController.hasClients) return;
+      final offset = _dayRange * _dayItemWidth;
+      if (animate) {
+        _dateScrollController.animateTo(
+          offset,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _dateScrollController.jumpTo(offset);
+      }
+    });
+  }
+
+  // ✅ دالة جديدة للـ scroll على اليوم المحدد
+  void _scrollToSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dateScrollController.hasClients) return;
+      final today = DateTime.now();
+      final diff = _selectedDate.difference(today).inDays;
+      final offset = (_dayRange - diff) * _dayItemWidth;
       _dateScrollController.animateTo(
-        offset,
-        duration: const Duration(milliseconds: 400),
+        offset.clamp(0, _dateScrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      _dateScrollController.jumpTo(offset);
-    }
+    });
   }
 
   // ── تنسيق التاريخ ────────────────────────────────────────────
@@ -686,16 +703,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           // ── شريط الأيام ─────────────────────────────────────
           Row(
             children: [
-              // ← سهم لليوم السابق
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: Color(0xFF2575FC)),
+                icon: const Icon(Icons.chevron_left, color: Color(0xFF2575FC)),
                 onPressed: () {
                   setState(() {
-                    _selectedDate = _selectedDate.subtract(
-                      const Duration(days: 1),
-                    );
+                    _selectedDate = _selectedDate.add(const Duration(days: 1));
                   });
                   _fetchSessions();
+                  _scrollToSelected();
                 },
               ),
 
@@ -705,10 +720,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   child: ListView.builder(
                     controller: _dateScrollController,
                     scrollDirection: Axis.horizontal,
-                    // ✅ index 0 = اليوم - 365 ، index _dayRange = اليوم
+                    reverse: true, // ✅ اتجاه عربي
                     itemCount: _dayRange * 2 + 1,
                     itemBuilder: (_, i) {
-                      final day = today.subtract(Duration(days: _dayRange - i));
+                      final day = today.add(Duration(days: _dayRange - i));
                       final isSelected =
                           _formatDate(day) == _formatDate(_selectedDate);
                       final todayDay = _isToday(day);
@@ -773,14 +788,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 ),
               ),
 
-              // سهم لليوم التالي →
+              // ✅ السهم الأيمن → اليوم السابق
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Color(0xFF2575FC)),
+                icon: const Icon(Icons.chevron_right, color: Color(0xFF2575FC)),
                 onPressed: () {
                   setState(() {
-                    _selectedDate = _selectedDate.add(const Duration(days: 1));
+                    _selectedDate = _selectedDate.subtract(
+                      const Duration(days: 1),
+                    );
                   });
                   _fetchSessions();
+                  _scrollToSelected();
                 },
               ),
             ],
