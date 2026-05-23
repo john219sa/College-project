@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../../core/constants/api_constants.dart';
+import 'login_screen.dart';
 
 class RegisterChildScreen extends StatefulWidget {
   final int? createdBy;
@@ -89,7 +90,12 @@ class _RegisterChildScreenState extends State<RegisterChildScreen> {
           isError: false,
         );
         await Future.delayed(const Duration(milliseconds: 800));
-        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
       } else {
         _showSnackBar(
           data['message'] ?? 'حدث خطأ، حاول مرة أخرى',

@@ -63,7 +63,7 @@ class CustomSideMenu extends StatelessWidget {
                   context,
                   Icons.calendar_month_rounded,
                   "الجدول الزمني",
-                  page: const ScheduleScreen(),
+                  page: const ScheduleScreen(specialistId: 0),
                 ),
 
                 _buildMenuItem(

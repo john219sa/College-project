@@ -86,9 +86,11 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => SpecialistDashboardScreen(
-                specialistId: userId,
+                specialistId: int.tryParse(user['id'].toString()) ?? 0,
                 specialistName: fullName,
                 specialistType: user['specialist_type'] ?? '',
+                familyId: int.tryParse(user['family_id'].toString()) ?? 0,
+                familyName: user['family_name'] ?? '',
               ),
             ),
           );

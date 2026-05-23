@@ -61,11 +61,11 @@ class AboutUsPage extends StatelessWidget {
         email: 'John219saf@gmail.com',
       ),
       TeamMember(
-        name: "فاطمة محمد",
+        name: "عمر محمد",
         role: "أخصائي علاج طبيعي",
-        imagePath: 'assets/images/fatma.jpg',
-        facebookUrl: 'https://www.facebook.com/share/1CdDUy6Rse/',
-        email: 'fatma@gmail.com',
+        imagePath: 'assets/images/omar.jpg',
+        facebookUrl: 'https://www.facebook.com/share/18Y5wFUc6n/',
+        email: 'amr.ismmail@gmail.com',
       ),
     ];
     return Scaffold(
@@ -154,6 +154,11 @@ class AboutUsPage extends StatelessWidget {
           "بسنت مجدى",
           "Team leader",
           'assets/images/bassant.jpg',
+        ),
+        _largeLeaderItem(
+          "فاطمة محمد",
+          "Deputy Team Leader",
+          'assets/images/fatma.jpg',
         ),
       ],
     );
