@@ -9,7 +9,7 @@ class ChildDetailsScreen extends StatefulWidget {
   final int childId;
   final String childName;
   final UserRole currentUserRole;
-  final int currentUserId; // ← مطلوب لإضافة التعليقات والتقارير
+  final int currentUserId;
 
   const ChildDetailsScreen({
     super.key,
@@ -33,6 +33,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
   List comments = [];
   List scans = [];
   List tests = [];
+  List sessions = []; // ← جديد
 
   // ===================== GET DATA =====================
 
@@ -54,6 +55,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
           comments = data['comments'];
           scans = data['scans'];
           tests = data['tests'];
+          sessions = data['sessions'] ?? []; // ← جديد
           isLoading = false;
         });
       }
@@ -78,7 +80,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
 
   bool get canAddComment => true;
 
-  // ===================== SNACKBAR =====================
+  // ===================== HELPERS =====================
 
   void _showSnack(String msg, {bool error = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -87,6 +89,45 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
         backgroundColor: error ? Colors.red : Colors.green,
       ),
     );
+  }
+
+  String _translateSpecialistType(String? type) {
+    switch (type) {
+      case 'speech':
+        return 'تخاطب';
+      case 'psychologist':
+        return 'نفسي';
+      case 'behavior':
+        return 'سلوك';
+      case 'special_education':
+        return 'تربية خاصة';
+      case 'occupational_therapy':
+        return 'علاج وظيفي';
+      default:
+        return type ?? '';
+    }
+  }
+
+  String _translateSessionStatus(String? status) {
+    switch (status) {
+      case 'done':
+        return 'منتهية';
+      case 'cancelled':
+        return 'ملغية';
+      default:
+        return 'متبقي';
+    }
+  }
+
+  Color _sessionStatusColor(String? status) {
+    switch (status) {
+      case 'done':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
   }
 
   // ===================== UPDATE CHILD =====================
@@ -154,6 +195,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
           'progress_level': progressLevel,
         }),
       );
+      print('STATUS CODE: ${response.statusCode}');
+      print('BODY: ${response.body}');
       final data = jsonDecode(response.body);
       if (data['status'] == true) {
         _showSnack('تم إضافة التقرير');
@@ -227,14 +270,12 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     );
     if (result != null) {
       String filePath = result.files.single.path!;
-      // TODO: رفع الملف للـ API
       print(filePath);
     }
   }
 
   // ===================== DIALOGS =====================
 
-  /// ديالوج تعديل حقل واحد (السن أو التشخيص)
   void showEditDialog(String title, String value, String field) {
     final controller = TextEditingController(text: value);
     showDialog(
@@ -265,7 +306,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     );
   }
 
-  /// ديالوج إضافة تعليق
   void showAddCommentDialog() {
     final controller = TextEditingController();
     showDialog(
@@ -295,7 +335,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     );
   }
 
-  /// ديالوج إضافة تقرير
   void showAddReportDialog() {
     final reportController = TextEditingController();
     final progressController = TextEditingController();
@@ -345,7 +384,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     );
   }
 
-  /// ديالوج إضافة خطة علاجية
   void showAddTreatmentDialog() {
     final titleController = TextEditingController();
     final descController = TextEditingController();
@@ -389,7 +427,6 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
     );
   }
 
-  /// ديالوج إضافة تمرين
   void showAddExerciseDialog() {
     final titleController = TextEditingController();
     final instructionsController = TextEditingController();
@@ -454,7 +491,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   children: [
-                    // ============ HEADER ============
+                    // ── HEADER ──────────────────────────────
                     Stack(
                       children: [
                         ClipPath(
@@ -526,7 +563,7 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                       ],
                     ),
 
-                    // ============ BODY ============
+                    // ── BODY ────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
@@ -611,10 +648,8 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                                 : null,
                             children: treatments.isEmpty
                                 ? [const Text('لا يوجد علاج')]
-                                : treatments.map<Widget>((treatment) {
-                                    return _buildBulletPoint(
-                                      treatment['title'] ?? '',
-                                    );
+                                : treatments.map<Widget>((t) {
+                                    return _buildBulletPoint(t['title'] ?? '');
                                   }).toList(),
                           ),
 
@@ -631,9 +666,93 @@ class _ChildDetailsScreenState extends State<ChildDetailsScreen> {
                                 : null,
                             children: exercises.isEmpty
                                 ? [const Text('لا توجد تمارين')]
-                                : exercises.map<Widget>((exercise) {
-                                    return _buildBulletPoint(
-                                      exercise['title'] ?? '',
+                                : exercises.map<Widget>((e) {
+                                    return _buildBulletPoint(e['title'] ?? '');
+                                  }).toList(),
+                          ),
+
+                          // ---- الجلسات ----
+                          _buildDetailCard(
+                            title: 'الجلسات',
+                            icon: Icons.calendar_month,
+                            color: Colors.indigo,
+                            children: sessions.isEmpty
+                                ? [const Text('لا توجد جلسات')]
+                                : sessions.map<Widget>((s) {
+                                    final statusColor = _sessionStatusColor(
+                                      s['status'],
+                                    );
+                                    final statusText = _translateSessionStatus(
+                                      s['status'],
+                                    );
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.indigo.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  s['specialist_name'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  _translateSpecialistType(
+                                                    s['specialist_type'],
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${s['session_date']}  ${s['session_time']}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                if (s['location'] != null)
+                                                  Text(
+                                                    'قاعة: ${s['location']}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withOpacity(
+                                                0.15,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              statusText,
+                                              style: TextStyle(
+                                                color: statusColor,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     );
                                   }).toList(),
                           ),

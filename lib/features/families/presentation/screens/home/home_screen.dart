@@ -12,7 +12,8 @@ import '../notifications_screen.dart';
 import '../schedule_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int currentUserId; // ← أضف
+  const HomeScreen({super.key, required this.currentUserId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -406,8 +407,11 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                ChildrenListScreen(familyId: familyId, familyName: familyName),
+            builder: (_) => ChildrenListScreen(
+              familyId: familyId,
+              familyName: familyName,
+              currentUserId: widget.currentUserId,
+            ),
           ),
         ),
         leading: CircleAvatar(

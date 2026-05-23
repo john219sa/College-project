@@ -24,10 +24,10 @@ class ChildrenListScreen extends StatefulWidget {
     super.key,
     required this.familyId,
     required this.familyName,
+    required this.currentUserId,
     this.isSpecialist = false,
     this.specialistId = 0,
     this.currentUserRole = UserRole.familyManager, // ← default
-    this.currentUserId = 0, // ← default
   });
 
   @override
@@ -245,6 +245,10 @@ class _ChildrenListScreenState extends State<ChildrenListScreen> {
                           ),
 
                           onTap: () {
+                            print(
+                              'currentUserId: ${widget.currentUserId}',
+                            ); // ← أضف دي
+                            print('childId: ${child['id']}');
                             Navigator.push(
                               context,
 

@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../../../core/constants/api_constants.dart';
-import '../auth/login_screen.dart'; // ← للـ logout
+import '../auth/login_screen.dart';
 import '../children/child_details_screen.dart';
 import '../children/children_list_screen.dart';
+import '../schedule_screen.dart';
 import 'package:college_project/core/enums/user_role.dart';
 
 class SpecialistDashboardScreen extends StatefulWidget {
@@ -33,8 +34,9 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
 
   List<Map<String, dynamic>> myChildren = [];
   List<Map<String, dynamic>> myCurriculum = [];
+  List<Map<String, dynamic>> mySessions = []; // ✅ جديد
 
-  // ── التخصص بالعربي ──────────────────────────────────────
+  // ── التخصص ──────────────────────────────────────────────
   String get specialistTypeLabel {
     switch (widget.specialistType) {
       case 'speech':
@@ -43,6 +45,10 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
         return 'نفسي';
       case 'behavior':
         return 'تعديل سلوك';
+      case 'special_education':
+        return 'تربية خاصة';
+      case 'occupational_therapy':
+        return 'علاج وظيفي';
       default:
         return '';
     }
@@ -56,6 +62,10 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
         return const Color(0xFF2E7D32);
       case 'behavior':
         return const Color(0xFF1565C0);
+      case 'special_education':
+        return const Color(0xFF6A1B9A);
+      case 'occupational_therapy':
+        return const Color(0xFF00695C);
       default:
         return const Color(0xFF6A11CB);
     }
@@ -68,7 +78,11 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
   }
 
   Future<void> _loadAll() async {
-    await Future.wait([_loadChildren(), _loadCurriculum()]);
+    await Future.wait([
+      _loadChildren(),
+      _loadCurriculum(),
+      _loadSessions(), // ✅ جديد
+    ]);
     if (mounted) setState(() => isLoading = false);
   }
 
@@ -77,7 +91,8 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
       final res = await http
           .get(
             Uri.parse(
-              '${ApiConstants.baseUrl}/children/get_specialist_children.php?specialist_id=${widget.specialistId}',
+              '${ApiConstants.baseUrl}/children/get_specialist_children.php'
+              '?specialist_id=${widget.specialistId}',
             ),
           )
           .timeout(const Duration(seconds: 15));
@@ -93,13 +108,52 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
       final res = await http
           .get(
             Uri.parse(
-              '${ApiConstants.baseUrl}/curriculum/get_specialist_curriculum.php?specialist_id=${widget.specialistId}',
+              '${ApiConstants.baseUrl}/curriculum/get_specialist_curriculum.php'
+              '?specialist_id=${widget.specialistId}',
             ),
           )
           .timeout(const Duration(seconds: 15));
       final data = jsonDecode(res.body);
       if (data['status'] == true) {
         myCurriculum = List<Map<String, dynamic>>.from(data['data']);
+      }
+    } catch (_) {}
+  }
+
+  // ✅ جلب جلسات اليوم الخاصة بالأخصائي
+  Future<void> _loadSessions() async {
+    try {
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final res = await http
+          .get(
+            Uri.parse(
+              '${ApiConstants.baseUrl}/sessions/get_sessions.php'
+              '?specialist_id=${widget.specialistId}&date=$dateStr',
+            ),
+          )
+          .timeout(const Duration(seconds: 15));
+      final data = jsonDecode(res.body);
+      if (data['status'] == true) {
+        mySessions = List<Map<String, dynamic>>.from(data['data']);
+      }
+    } catch (_) {}
+  }
+
+  // ✅ تحديث حالة الجلسة (تمت / متبقي)
+  Future<void> _toggleSessionStatus(int sessionId, String currentStatus) async {
+    final newStatus = currentStatus == 'done' ? 'pending' : 'done';
+    try {
+      final res = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/sessions/update_session_status.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'session_id': sessionId, 'status': newStatus}),
+      );
+      final data = jsonDecode(res.body);
+      if (data['status'] == true && mounted) {
+        await _loadSessions();
+        setState(() {});
       }
     } catch (_) {}
   }
@@ -153,7 +207,6 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FA),
-
       appBar: AppBar(
         backgroundColor: specialistColor,
         elevation: 0,
@@ -170,6 +223,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                       familyId: widget.familyId,
                       familyName: widget.familyName,
                       isSpecialist: false,
+                      currentUserId: widget.specialistId,
                     ),
                   ),
                 ),
@@ -217,6 +271,18 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
             : null,
         centerTitle: true,
         actions: [
+          // ✅ زرار جدول الجلسات الكامل
+          IconButton(
+            icon: const Icon(Icons.calendar_month_rounded, color: Colors.white),
+            tooltip: 'جدول الجلسات',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    ScheduleScreen(specialistId: widget.specialistId),
+              ),
+            ).then((_) => _loadSessions().then((_) => setState(() {}))),
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'تسجيل الخروج',
@@ -228,7 +294,10 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () async => _loadAll(),
+              onRefresh: () async {
+                await _loadAll();
+                setState(() {});
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
@@ -251,11 +320,13 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                         children: [
                           CircleAvatar(
                             radius: 45,
-                            backgroundImage: const AssetImage(
-                              'assets/images/bassant.jpg',
-                            ), // ← غيّر الاسم
                             backgroundColor: Colors.white.withValues(
                               alpha: 0.2,
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 50,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -303,25 +374,57 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                                 color: Colors.orange,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            // ✅ stat جلسات اليوم
+                            Expanded(
+                              child: _statCard(
+                                label: 'جلسات اليوم',
+                                value: '${mySessions.length}',
+                                icon: Icons.event_note_rounded,
+                                color: Colors.teal,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
 
-                    // ── Body ────────────────────────────────
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          // ── أطفالي ────────────────────────
+                          // ════════════════════════════════
+                          // ✅ جلسات اليوم
+                          // ════════════════════════════════
+                          _sectionHeader(
+                            'جلسات اليوم',
+                            Icons.event_note_rounded,
+                            Colors.teal,
+                          ),
+                          const SizedBox(height: 12),
+                          mySessions.isEmpty
+                              ? _emptyState(
+                                  'لا توجد جلسات اليوم',
+                                  Icons.event_busy_outlined,
+                                )
+                              : Column(
+                                  children: mySessions
+                                      .map((s) => _sessionCard(s))
+                                      .toList(),
+                                ),
+
+                          const SizedBox(height: 28),
+
+                          // ════════════════════════════════
+                          // أطفالي
+                          // ════════════════════════════════
                           _sectionHeader(
                             'جميع الأطفال التابعين لي',
                             Icons.child_care,
                             specialistColor,
                           ),
                           const SizedBox(height: 12),
-
                           myChildren.isEmpty
                               ? _emptyState(
                                   'لا يوجد أطفال مسندون إليك',
@@ -353,8 +456,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                                             childName: child['name'] ?? '',
                                             currentUserRole:
                                                 UserRole.specialist,
-                                            currentUserId:
-                                                widget.specialistId, // ← مُصلح
+                                            currentUserId: widget.specialistId,
                                           ),
                                         ),
                                       ),
@@ -365,14 +467,15 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
 
                           const SizedBox(height: 28),
 
-                          // ── المنهج ────────────────────────
+                          // ════════════════════════════════
+                          // المنهج
+                          // ════════════════════════════════
                           _sectionHeader(
-                            'المنهج والجلسات',
+                            'المنهج',
                             Icons.menu_book,
                             Colors.orange,
                           ),
                           const SizedBox(height: 12),
-
                           myCurriculum.isEmpty
                               ? _emptyState(
                                   'لم يتم رفع منهج بعد',
@@ -394,9 +497,141 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
   }
 
   // ════════════════════════════════════════════════════════
-  // WIDGETS
+  // ✅ SESSION CARD
   // ════════════════════════════════════════════════════════
+  Widget _sessionCard(Map<String, dynamic> s) {
+    final sessionId = int.tryParse(s['id'].toString()) ?? 0;
+    final isDone = s['status'] == 'done';
+    final isCancelled = s['status'] == 'cancelled';
+    final timeStr = (s['session_time'] ?? '').toString();
+    final displayTime = timeStr.length >= 5 ? timeStr.substring(0, 5) : timeStr;
+    final children = s['children'] as List? ?? [];
+    final childCount = children.length;
 
+    Color statusColor = isDone
+        ? Colors.green
+        : isCancelled
+        ? Colors.red
+        : Colors.teal;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: statusColor.withOpacity(0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+        ],
+      ),
+      child: Row(
+        children: [
+          // ✅ زرار Toggle Done
+          GestureDetector(
+            onTap: isCancelled
+                ? null
+                : () => _toggleSessionStatus(sessionId, s['status']),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDone ? Colors.green : Colors.white,
+                border: Border.all(
+                  color: isDone ? Colors.green : Colors.grey.shade300,
+                  width: 2,
+                ),
+              ),
+              child: isDone
+                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                  : null,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // تفاصيل الجلسة
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // نوع الجلسة
+                Text(
+                  s['session_type'] ?? '',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDone ? Colors.grey : Colors.black87,
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // المكان + عدد الأطفال
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$childCount طفل',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.circle, size: 4, color: Colors.grey[400]),
+                    const SizedBox(width: 6),
+                    Text(
+                      s['location'] ?? '',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // الوقت + badge الحالة
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                displayTime,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  isDone
+                      ? 'تمت'
+                      : isCancelled
+                      ? 'ملغاة'
+                      : 'متبقي',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════
+  // WIDGETS مساعدة
+  // ════════════════════════════════════════════════════════
   Widget _statCard({
     required String label,
     required String value,
@@ -550,7 +785,6 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(

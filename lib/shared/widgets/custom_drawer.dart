@@ -56,7 +56,7 @@ class CustomSideMenu extends StatelessWidget {
                   Icons.dashboard_rounded,
                   "الرئيسية",
                   isSelected: true,
-                  page: const HomeScreen(),
+                  page: HomeScreen(currentUserId: 1),
                 ),
 
                 _buildMenuItem(
@@ -241,8 +241,11 @@ class CustomSideMenu extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                ChildrenListScreen(familyId: familyId, familyName: familyName),
+            builder: (_) => ChildrenListScreen(
+              familyId: familyId,
+              familyName: familyName,
+              currentUserId: 1, // الأدمن id دايماً 1
+            ),
           ),
         );
       },
